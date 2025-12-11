@@ -3,7 +3,6 @@ body {
     font-family: Arial, sans-serif;
     background: linear-gradient(135deg, rgba(135, 206, 235, 1) 0%, rgba(2, 16, 88, 1) 80%);
     margin: 0;
-    padding-top: 20px;
     overflow: hidden;
 }
 
@@ -27,6 +26,7 @@ button {
     margin-top: 10px;
     width: 95%;
 }
+
 
 .bottom-text {
     position: fixed;
@@ -60,18 +60,54 @@ button {
     border: #000000 2px solid;
     border-radius: 20px;
     padding: 10px;
-
 }
 
-.metingenknop {
+.knop {
     width: 150px;
+}
+
+.top {
     margin: auto;
 }
 
 .resultaat {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
     width: 500px;
-    height: 500px;;
-    background-color: red;
+    height: 500px;
+    background: #ff0000;
+    border-radius: 20px;
+    padding: 20px;
     margin: auto;
+}
 
+.main {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.bodem {
+    margin: 20px;
+}
+
+.header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 50px;
+    padding: 20px;
+    background: #FFFFFF;
+}
+
+.menu {
+    background-color: #86CDEA;
+    color: black;
+    border: 0px;
 }
