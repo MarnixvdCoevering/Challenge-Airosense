@@ -4,11 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
+    <!-- Supabase CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- JOUW SCRIPT ALS MODULE -->
+    <script type="module" src="javascript/gebruikers.js"></script>
     <title>Login</title>
 </head>
 <body>
     <div class="login">
-        <form action="/autorisatie.html" method="post">
+        <form method="get" class="login-form">
             <label for="email">E-mail</label><br>
             <input type="text" name="email" placeholder="E-mail" required><br>
             <label for="wachtwoord">Wachtwoord</label><br>
@@ -18,7 +23,6 @@
         <h2>Don't have an account?</h2>
         <a href="signup.html">Sign Up</a>
         <a href="mainscreen.html">Main Screen</a>
-
     </div>
     <div class="bottom-text"><p>Contact:</p><br><p>E-mail: airosense@hotmail.com</p></div>
 </body>
