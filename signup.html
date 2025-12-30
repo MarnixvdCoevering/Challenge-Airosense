@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <!-- Supabase CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- JOUW SCRIPT ALS MODULE -->
+    <script type="module" src="javascript/gebruikers.js"></script>
+    <title>Sign up</title>
+</head>
+
+<body>
+    <div class="signup">
+        <h2>Regristreer bij Airosense</h2>
+            <form method="POST" class="signup-form" id="signup-form">
+            <label for="gebruikersnaam">Gebruikersnaam:</label><br>
+            <input
+                type="text"
+                id="gebruikersnaam"
+                name="gebruikersnaam"
+                placeholder="Gebruikersnaam"
+                required
+                minlength="4"
+                maxlength="20"
+                pattern="[A-Za-z0-9]+"
+                title="Gebruik alleen letters en cijfers (4–20 tekens)"
+            ><br>
+    
+            <label for="email">Email:</label><br>
+            <input
+                type="email"
+                id="email"
+                name="email"
+                placeholder="Email"
+                required
+            ><br>
+
+            <label for="wachtwoord">Wachtwoord:</label><br>
+            <input
+                type="password"
+                id="wachtwoord"
+                name="wachtwoord"
+                placeholder="Wachtwoord"
+                required
+                minlength="8"
+                maxlength="30"
+                pattern="[A-Za-z0-9]+"
+                title="Gebruik alleen letters en cijfers (8–30 tekens)"
+            ><br>
+
+            <button type="submit">Sign Up</button>
+            </form>
+
+        <p>Already have an account? <a href="index.html">Log in here</a></p>
+    </div>
+    <div class="bottom-text">Contact: E-mailadres: airosense@hotmail.com</div>
+</body>
+</html>

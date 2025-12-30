@@ -1,0 +1,116 @@
+body {
+    min-height: 100vh;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, rgba(135, 206, 235, 1) 0%, rgba(2, 16, 88, 1) 80%);
+    margin: 0;
+    overflow: hidden;
+}
+
+input {
+    background-color: #fff;
+    border: #000000 3px solid;
+    border-radius: 20px;
+    padding: 10px 5px;
+    margin: 10px 0;
+    width: 90%;
+}
+
+button {
+    background-color: #ffffff;
+    color: #000000;
+    font-size: 15px;
+    border: #000 3px solid;
+    border-radius: 20px;
+    padding: 10px 10px;
+    cursor: pointer;
+    margin-top: 10px;
+    width: 95%;
+}
+
+
+.bottom-text {
+    position: fixed;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    bottom: 0;
+    width: 100%;
+    height: 70px;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.6);
+    color: #ffffff;
+    font-size: 18px;
+}
+
+.login {
+    background-color: #fff;
+    width: 300px;
+    margin: auto;
+    border: #000000 3px solid;
+    border-radius: 20px;
+    padding: 20px;
+    padding-top: 30px;
+    padding-bottom: 30px;
+}
+
+.signup {
+    background-color: #fff; 
+    width: 300px;
+    margin: auto;
+    border: #000000 2px solid;
+    border-radius: 20px;
+    padding: 10px;
+}
+
+.knop {
+    width: 150px;
+}
+
+.top {
+    margin: auto;
+}
+
+.resultaat {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    width: 500px;
+    height: 500px;
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 20px;
+    margin: auto;
+}
+
+.main {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.bodem {
+    margin: 20px;
+}
+
+.header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 50px;
+    background: #FFFFFF;
+}
+
+.menu {
+    background-color: #86CDEA;
+    color: black;
+    border: 0px;
+}
+
+.logo {
+    height: 100px;
+}
