@@ -17,7 +17,7 @@ function getGebruikerUuid() {
   return id;
 }
 
-// ✅ UPDATED: includes raw_h2 and raw_eth
+//includes raw_h2 and raw_eth
 async function insertMeting({ locatie, eco2, tvoc, raw_h2, raw_eth, gebruikerUuid }) {
   const url = `${SUPABASE_URL}/rest/v1/meting`;
 
@@ -66,11 +66,11 @@ function parseCSVTextToLatest(text) {
   return { eco2, tvoc, raw_h2, raw_eth };
 }
 
-// ✅ UPDATED: reads last row numbers and maps correctly for your MY_DATA order
+//reads last row numbers and maps correctly for your MY_DATA order
 function parseHTMLDataLogToLatest(text) {
   const trMatches = text.match(/<tr[\s\S]*?<\/tr>/gi);
   if (!trMatches || trMatches.length === 0) {
-    // fallback: last numbers in whole document
+    //last numbers in whole document
     const allNums = (text.match(/-?\d+(\.\d+)?/g) || []).map(Number).filter(n => Number.isFinite(n));
     if (allNums.length < 4) throw new Error("Geen meetwaarden gevonden in HTML.");
     return {
@@ -85,7 +85,6 @@ function parseHTMLDataLogToLatest(text) {
   const nums = (lastTr.match(/-?\d+(\.\d+)?/g) || []).map(Number).filter(n => Number.isFinite(n));
   if (nums.length < 4) throw new Error("Kon eco2/tvoc/raw_h2/raw_eth niet vinden in laatste HTML rij.");
 
-  // Your MY_DATA columns end with: eco2, tvoc, raw_h2, raw_eth
   const raw_eth = nums[nums.length - 1];
   const raw_h2  = nums[nums.length - 2];
   const tvoc    = nums[nums.length - 3];
