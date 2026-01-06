@@ -12,7 +12,9 @@ const statusText = document.getElementById("statusText");
 const latestText = document.getElementById("latestText");
 
 function getGebruikerUuid() {
-  const id = localStorage.getItem("gebruikerid");
+    const gebruikerString = sessionStorage.getItem("gebruiker");
+    const gebruiker = JSON.parse(gebruikerString);
+    const id = gebruiker.gebruikerid;
   if (!id) throw new Error("Geen gebruikerid gevonden. Zet localStorage.gebruikerid.");
   return id;
 }

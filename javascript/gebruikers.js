@@ -72,6 +72,14 @@ if (form) {
   });
 }
 
+async function logdata() {
+  const gebruikerString = sessionStorage.getItem("gebruiker");
+  const gebruiker = JSON.parse(gebruikerString);
+  const gebruikerid = gebruiker.gebruikerid;
+
+  console.log(gebruikerid);
+}
+
 const page = window.location.pathname;
 
 if (!page.includes("index.html") && !page.includes("autorisatie.html") && !page.includes("signup.html")) {
