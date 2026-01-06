@@ -6,18 +6,6 @@ const supabase = window.supabase.createClient(
   supabaseKey
 );
 
-async function fetchGebruikerData() {
-  const { data, error } = await supabase
-    .from('gebruikeraccount')
-    .select('*');
-
-  if (error) {
-    console.error('Error:', error);
-  } else {
-    console.log('Gebruikers:', data);
-  }
-}
-
 const loginForm = document.querySelector(".login-form");
 
 if (loginForm) {
@@ -85,10 +73,6 @@ if (form) {
 }
 
 const page = window.location.pathname;
-
-if (page.includes("mainscreen.html")) {
-  fetchGebruikerData();
-}
 
 if (!page.includes("index.html") && !page.includes("autorisatie.html") && !page.includes("signup.html")) {
   checkIngelogd();
