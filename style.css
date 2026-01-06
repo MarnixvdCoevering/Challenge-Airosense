@@ -114,3 +114,73 @@ button {
 .logo {
     height: 100px;
 }
+
+@media (max-width: 600px) {
+    body {
+        overflow: auto;
+        font-size: 16px;
+    }
+
+    .header {
+        gap: 16px;
+        padding: 8px;
+    }
+
+    .logo {
+        height: 56px;
+    }
+
+    .main {
+        gap: 12px;
+        padding: 12px;
+        margin-top: 12px;
+    }
+
+    .resultaat {
+        width: 92vw;
+        max-width: 420px;
+        height: auto;
+        padding: 16px;
+        align-items: center;
+    }
+
+    .login,
+    .signup {
+        width: 92vw;
+        max-width: 360px;
+        padding: 14px;
+        border-width: 2px;
+    }
+
+    input,
+    button {
+        width: 100%;
+        box-sizing: border-box;
+        font-size: 16px;
+        padding: 12px;
+    }
+
+    .knop {
+        width: 100%;
+    }
+
+    .bottom-text {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: auto;
+        padding: 10px;
+        font-size: 14px;
+    }
+
+    .menu {
+        padding: 8px 10px;
+        font-size: 14px;
+    }
+
+    .top,
+    .bodem {
+        margin: 12px;
+    }
+}
