@@ -80,12 +80,14 @@ async function logdata() {
   console.log(gebruikerid);
 }
 
-const page = window.location.pathname.split("/").pop();
+const path = window.location.pathname;
 
 if (
-  page !== "" &&
-  page !== "index.html" &&
-  page !== "signup.html"
+  path === "/" ||
+  path.endsWith("/index.html") ||
+  path.endsWith("/signup.html")
 ) {
+
+} else {
   checkIngelogd();
 }
