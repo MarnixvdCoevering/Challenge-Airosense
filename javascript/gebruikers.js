@@ -80,8 +80,12 @@ async function logdata() {
   console.log(gebruikerid);
 }
 
-const page = window.location.pathname;
+const page = window.location.pathname.split("/").pop();
 
-if (!page.includes("index.html") && !page.includes("autorisatie.html") && !page.includes("signup.html")) {
+if (
+  page !== "" &&
+  page !== "index.html" &&
+  page !== "signup.html"
+) {
   checkIngelogd();
 }
