@@ -6,32 +6,10 @@
     <title>Airosense – Map</title>
 
     <link rel="stylesheet" href="style.css">
-
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-        <script type="module" src="javascript/metingen.js"></script>
-    <script type="module" src="javascript/gebruikers.js"></script>
-
-    <style>
-        html, body {
-            height: 100%;
-            margin: 0;
-            font-family: Arial, sans-serif;
-        }
-
-        #map {
-            height: calc(97vh - 160px); 
-            width: 100%;
-            background-color: #f0f0f0;
-            
-        }
-
-        .leaflet-control-attribution {
-            display: none;
-        }
-    </style>
 </head>
 
 <body>
@@ -46,67 +24,175 @@
     </a>
 </header>
 
-<div id="map"></div>
+<!-- Controls -->
+<div class="gemeente-select">
+    <label for="gemeenteDropdown">Selecteer gemeente</label>
+    <select id="gemeenteDropdown">
+        <option value="">-- Kies een gemeente --</option>
+    </select>
+    <button id="resetMap">Reset Nederland</button>
+</div>
 
-<div class="bottom-text">
-    <p>Contact: airosense@hotmail.com</p>
+<div class="mapcontainer">
+    <div id="map"></div>
 </div>
 
 <script>
+/* =========================
+   Supabase
+========================= */
 const supabaseUrl = "https://shkpjdqcnxygpmzrmsnq.supabase.co";
 const supabaseKey = "sb_publishable_WSC4uJgY2EoUmwVVbzbgAA_VQrBAx5N";
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
-const map = L.map('map').setView([52.2, 5.3], 7);
+
+/* =========================
+   Nederland bounds
+========================= */
+const nederlandBounds = [
+    [50.5, 3.0],
+    [53.8, 7.5]
+];
+
+/* =========================
+   Map
+========================= */
+const map = L.map("map", {
+    maxBounds: nederlandBounds,
+    maxBoundsViscosity: 0.8
+}).setView([52.2, 5.3], 7);
+
+map.setMinZoom(7);
+map.setMaxZoom(14);
+
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "&copy; OpenStreetMap contributors"
+}).addTo(map);
+
+/* =========================
+   Styles
+========================= */
+const defaultStyle = { fillColor: "#ffffff", color: "#000", weight: 1, fillOpacity: 0.7 };
+const hoverStyle   = { fillColor: "#e0f0ff", weight: 2 };
+const selectedStyle= { fillColor: "#99ccff", weight: 3 };
+
+let selectedLayer = null;
+let gemeenteLayers = {};
+
+/* =========================
+   Gemeente WFS
+========================= */
 const gemeenteWFS =
-  "https://service.pdok.nl/cbs/gebiedsindelingen/2025/wfs/v1_0" +
-  "?service=WFS" +
-  "&version=2.0.0" +
-  "&request=GetFeature" +
-  "&typeNames=gebiedsindelingen:gemeente_gegeneraliseerd" + 
-  "&outputFormat=application/json" +
-  "&srsName=EPSG:4326";
+    "https://service.pdok.nl/cbs/gebiedsindelingen/2025/wfs/v1_0" +
+    "?service=WFS&version=2.0.0&request=GetFeature" +
+    "&typeNames=gebiedsindelingen:gemeente_gegeneraliseerd" +
+    "&outputFormat=application/json&srsName=EPSG:4326";
 
 fetch(gemeenteWFS)
-  .then(response => {
-      if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      return response.json();
-  })
-  .then(geojson => {
-      console.log("GeoJSON data:", geojson);
+    .then(res => res.json())
+    .then(async geojson => {
+        const dropdown = document.getElementById("gemeenteDropdown");
 
-      if (!geojson.features || geojson.features.length === 0) {
-          console.error("No features found in WFS response.");
-          return;
-      }
+        // Voeg gemeenten toe aan map
+        L.geoJSON(geojson, {
+            style: defaultStyle,
+            onEachFeature: (feature, layer) => {
+                const name = feature.properties.statnaam || "Onbekend";
 
-      const gemeenteLayer = L.geoJSON(geojson, {
-          style: {
-              fillColor: "#ffffff",
-              color: "#000000",
-              weight: 1,
-              fillOpacity: 0.7
-          },
-          onEachFeature: (feature, layer) => {
-              const name = feature.properties.statnaam || feature.properties.STATNAAM || "Onbekend";
-              layer.bindPopup(`<b>Gemeente: ${name}</b>`);
+                layer.bindPopup(`<b>${name}</b>`);
+                gemeenteLayers[name] = layer;
 
-              layer.on('mouseover', function() {
-                  this.setStyle({ fillColor: '#e0f0ff', weight: 2 });
-              });
-              layer.on('mouseout', function() {
-                  this.setStyle({ fillColor: '#ffffff', weight: 1 });
-              });
-          }
-      }).addTo(map);
+                layer.on("mouseover", () => {
+                    if (layer !== selectedLayer) layer.setStyle(hoverStyle);
+                });
 
-      map.fitBounds(gemeenteLayer.getBounds());
-  })
-  .catch(err => {
-      console.error("WFS error:", err);
-      alert("Fout bij laden gemeentekaart. Controleer de console (F12) voor details.");
-  });
+                layer.on("mouseout", () => {
+                    if (layer !== selectedLayer) layer.setStyle(defaultStyle);
+                });
+            }
+        }).addTo(map);
+
+        /* =========================
+           Dropdown vullen
+        ========================= */
+        Object.keys(gemeenteLayers)
+            .sort((a,b)=>a.localeCompare(b,"nl"))
+            .forEach(name => {
+                const option = document.createElement("option");
+                option.value = name;
+                option.textContent = name;
+                dropdown.appendChild(option);
+            });
+
+        /* =========================
+           Supabase kleuren (laatste meting per gemeente)
+        ========================== */
+        async function kleurLaatsteMetingen() {
+            let { data, error } = await supabaseClient
+                .from("metingen")
+                .select("gemeente, eco2_waarde, datum")
+                .order("datum", { ascending: false });
+
+            if (error) {
+                console.error("Supabase error:", error);
+                return;
+            }
+
+            // Laatste meting per gemeente
+            const laatstePerGemeente = {};
+            data.forEach(item => {
+                if (!laatstePerGemeente[item.gemeente]) {
+                    laatstePerGemeente[item.gemeente] = item;
+                }
+            });
+
+            Object.values(laatstePerGemeente).forEach(item => {
+                const layer = gemeenteLayers[item.gemeente];
+                if (!layer) return;
+
+                const waarde = item.eco2_waarde;
+                let color;
+                if (waarde > 1000) color = "#ff4d4d";
+                else if (waarde > 500) color = "#ffcc00";
+                else color = "#66cc66";
+
+                layer.setStyle({ fillColor: color, fillOpacity: 0.7 });
+                layer.bindPopup(`<b>${item.gemeente}</b><br>Laatste eco2 waarde: ${waarde}`);
+            });
+        }
+
+        await kleurLaatsteMetingen();
+
+        /* =========================
+           Dropdown select
+        ========================= */
+        dropdown.addEventListener("change", function() {
+            const name = this.value;
+            if (!name) return;
+
+            const layer = gemeenteLayers[name];
+
+            if (selectedLayer) selectedLayer.setStyle(defaultStyle);
+            selectedLayer = layer;
+            layer.setStyle(selectedStyle);
+
+            map.fitBounds(layer.getBounds(), { padding: [50,50] });
+            map.panTo(layer.getBounds().getCenter(), { animate: true, duration: 0.5 });
+
+            layer.openPopup();
+        });
+
+        /* =========================
+           Reset button
+        ========================= */
+        document.getElementById("resetMap").addEventListener("click", () => {
+            if (selectedLayer) selectedLayer.setStyle(defaultStyle);
+            selectedLayer = null;
+            dropdown.value = "";
+            map.fitBounds(nederlandBounds);
+        });
+
+        map.fitBounds(nederlandBounds);
+    });
 </script>
 
 </body>
