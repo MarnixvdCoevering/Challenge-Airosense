@@ -3,15 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Airosense – Map</title>
+
     <link rel="stylesheet" href="style.css">
-    <title>Airosense</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+        <script type="module" src="javascript/metingen.js"></script>
+    <script type="module" src="javascript/gebruikers.js"></script>
+
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        #map {
+            height: calc(97vh - 160px); 
+            width: 100%;
+            background-color: #f0f0f0;
+            
+        }
+
+        .leaflet-control-attribution {
+            display: none;
+        }
+    </style>
 </head>
+
 <body>
-    <header class="header">
-        <a href="./map.html"><button class="knop menu">Map</button></a>
-        <a href="./mainscreen.html"><img class="logo" src="./img/Airosense2.png" alt="Airosense Logo"></a>
-        <a href="./vorigemetingen.html"><button class="knop menu">Metingen</button></a>
-    </header>
-    <div class="bottom-text"><p>Contact:</p><br><p>E-mail: airosense@hotmail.com</p></div>
+
+<header class="header">
+    <a href="./map.html"><button class="knop menu">Map</button></a>
+    <a href="./mainscreen.html">
+        <img class="logo" src="./img/Airosense2.png" alt="Airosense Logo">
+    </a>
+    <a href="./vorigemetingen.html">
+        <button class="knop menu">Metingen</button>
+    </a>
+</header>
+
+<div id="map"></div>
+
+<div class="bottom-text">
+    <p>Contact: airosense@hotmail.com</p>
+</div>
+
+<script>
+const supabaseUrl = "https://shkpjdqcnxygpmzrmsnq.supabase.co";
+const supabaseKey = "sb_publishable_WSC4uJgY2EoUmwVVbzbgAA_VQrBAx5N";
+const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+const map = L.map('map').setView([52.2, 5.3], 7);
+const gemeenteWFS =
+  "https://service.pdok.nl/cbs/gebiedsindelingen/2025/wfs/v1_0" +
+  "?service=WFS" +
+  "&version=2.0.0" +
+  "&request=GetFeature" +
+  "&typeNames=gebiedsindelingen:gemeente_gegeneraliseerd" + 
+  "&outputFormat=application/json" +
+  "&srsName=EPSG:4326";
+
+fetch(gemeenteWFS)
+  .then(response => {
+      if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+  })
+  .then(geojson => {
+      console.log("GeoJSON data:", geojson);
+
+      if (!geojson.features || geojson.features.length === 0) {
+          console.error("No features found in WFS response.");
+          return;
+      }
+
+      const gemeenteLayer = L.geoJSON(geojson, {
+          style: {
+              fillColor: "#ffffff",
+              color: "#000000",
+              weight: 1,
+              fillOpacity: 0.7
+          },
+          onEachFeature: (feature, layer) => {
+              const name = feature.properties.statnaam || feature.properties.STATNAAM || "Onbekend";
+              layer.bindPopup(`<b>Gemeente: ${name}</b>`);
+
+              layer.on('mouseover', function() {
+                  this.setStyle({ fillColor: '#e0f0ff', weight: 2 });
+              });
+              layer.on('mouseout', function() {
+                  this.setStyle({ fillColor: '#ffffff', weight: 1 });
+              });
+          }
+      }).addTo(map);
+
+      map.fitBounds(gemeenteLayer.getBounds());
+  })
+  .catch(err => {
+      console.error("WFS error:", err);
+      alert("Fout bij laden gemeentekaart. Controleer de console (F12) voor details.");
+  });
+</script>
+
 </body>
 </html>
