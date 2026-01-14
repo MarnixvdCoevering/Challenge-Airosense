@@ -1,100 +1,95 @@
 const supabaseUrl = "https://shkpjdqcnxygpmzrmsnq.supabase.co";
 const supabaseKey = "sb_publishable_WSC4uJgY2EoUmwVVbzbgAA_VQrBAx5N";
 
-
 const supabase = window.supabase.createClient(
   supabaseUrl,
   supabaseKey
 );
 
+const loginForm = document.querySelector(".login-form");
 
-async function fetchGebruikerData() {
-  const { data, error } = await supabase
-    .from('gebruikeraccount')
-    .select('*');
+if (loginForm) {
+  loginForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = loginForm.email.value.toLowerCase();
+    const wachtwoord = loginForm.wachtwoord.value;
+    if (!email || !wachtwoord) {
+      alert("Vul je email en wachtwoord in!");
+      return;
+    }
 
-  if (error) {
-    console.error('Error:', error);
-  } else {
-    console.log('Gebruikers:', data);
+    const { data, error } = await supabase
+      .from("gebruikeraccount")
+      .select("*")
+      .eq("emailadres", email)
+      .eq("wachtwoord", wachtwoord)
+      .single();
+
+    if (error || !data) {
+      alert("Email of wachtwoord is verkeerd!");
+      return;
+    }
+
+    sessionStorage.setItem("gebruiker", JSON.stringify(data));
+    window.location.href = "mainscreen.html";
+  });
+}
+
+function checkIngelogd() {
+  const gebruiker = sessionStorage.getItem("gebruiker");
+  if (!gebruiker) {
+    window.location.replace("index.html");
   }
 }
 
-
-const loginForm = document.querySelector(".login-form");
-loginForm.addEventListener("submit", async (e) => {
-    e.preventDefault(); // voorkomt dat het formulier de pagina reload
-
-    const email = loginForm.email.value;
-    const wachtwoord = loginForm.wachtwoord.value;
-
-    if (!email || !wachtwoord) {
-        alert("Vul je email en wachtwoord in!");
-        return;
-    }
-
-    // checken bij Supabase
-    const { data, error } = await supabase
-        .from("gebruikeraccount")
-        .select("*")
-        .eq("emailadres", email)
-        .eq("wachtwoord", wachtwoord)
-        .single();
-
-    if (error || !data) {
-        alert("Email of wachtwoord is verkeerd!");
-        return;
-    }
-
-    // succesvol inloggen → data opslaan en doorsturen
-    sessionStorage.setItem("gebruiker", JSON.stringify(data));
-    window.location.href = "mainscreen.html";
-});
-
-
-function checkIngelogd() {
-    const gebruiker = sessionStorage.getItem("gebruiker");
-    if (!gebruiker) {
-        window.location.href = "index.html";
-    }
-}
-
-
 const form = document.getElementById("signup-form");
-form.addEventListener("submit", async (e) => {
+
+if (form) {
+  form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const gebruikersnaam = form.gebruikersnaam.value;
-    const email = form.email.value;
+    const email = form.email.value.toLowerCase();
     const wachtwoord = form.wachtwoord.value;
 
     const { data, error } = await supabase
-        .from("gebruikeraccount")
-        .insert([
-            {
-                gebruikersnaam: gebruikersnaam,
-                emailadres: email,
-                wachtwoord: wachtwoord
-            }
-        ]);
+      .from("gebruikeraccount")
+      .insert([
+        {
+          gebruikersnaam: gebruikersnaam,
+          emailadres: email,
+          wachtwoord: wachtwoord
+        }
+      ]);
 
     if (error) {
-        alert("Er ging iets fout: " + error.message);
+      alert("Er ging iets fout: " + error.message);
     } else {
-        alert("Gebruiker succesvol aangemaakt!");
-        form.reset();
-        window.location.href = "index.html";
+      alert("Gebruiker succesvol aangemaakt!");
+      form.reset();
+      window.location.href = "index.html";
     }
-});
-
-
-
-const page = window.location.pathname;
-
-if (page.includes("mainscreen.html")) {
-    fetchGebruikerData();
+  });
 }
 
-if (!page.includes("index.html") && !page.includes("autorisatie.html") && !page.includes("signup.html")) {
-    checkIngelogd();
+async function logdata() {
+  const gebruikerString = sessionStorage.getItem("gebruiker");
+  const gebruiker = JSON.parse(gebruikerString);
+  const gebruikerid = gebruiker.gebruikerid;
+
+  console.log(gebruikerid);
+}
+
+const path = window.location.pathname;
+
+if (
+  path === "/" ||
+  path.endsWith("/index.html") ||
+  path.endsWith("/signup.html") ||
+  path.endsWith("/index") ||
+  path.endsWith("/signup")
+) {
+
+} else {
+  checkIngelogd();
 }
