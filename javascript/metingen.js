@@ -6,6 +6,7 @@ const supabase = window.supabase.createClient(
   supabaseKey
 );
 
+
 const gebruikerString = sessionStorage.getItem("gebruiker");
 
 if (!gebruikerString) {
@@ -74,7 +75,7 @@ if (!gebruikerString) {
 
   const page = window.location.pathname;
 
-  if (page.includes("vorigemetingen.html")) {
+  if (page.includes("vorigemetingen.html") || page.includes("vorigemetingen")) {
     fetchMetingenData();
   }
 }
