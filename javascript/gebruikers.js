@@ -6,13 +6,21 @@ const supabase = window.supabase.createClient(
   supabaseKey
 );
 
-const loginForm = document.querySelector(".login-form");
+async function hashWachtwoord(wachtwoord) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(wachtwoord);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+}
 
+const loginForm = document.querySelector(".login-form");
 if (loginForm) {
   loginForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const email = loginForm.email.value.toLowerCase();
     const wachtwoord = loginForm.wachtwoord.value;
+    const hashedWachtwoord = await hashWachtwoord(wachtwoord);
     if (!email || !wachtwoord) {
       alert("Vul je email en wachtwoord in!");
       return;
@@ -22,7 +30,7 @@ if (loginForm) {
       .from("gebruikeraccount")
       .select("*")
       .eq("emailadres", email)
-      .eq("wachtwoord", wachtwoord)
+      .eq("wachtwoord", hashedWachtwoord)
       .single();
 
     if (error || !data) {
@@ -43,7 +51,6 @@ function checkIngelogd() {
 }
 
 const form = document.getElementById("signup-form");
-
 if (form) {
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -52,13 +59,15 @@ if (form) {
     const email = form.email.value.toLowerCase();
     const wachtwoord = form.wachtwoord.value;
 
+    const hashedWachtwoord = await hashWachtwoord(wachtwoord);
+
     const { data, error } = await supabase
       .from("gebruikeraccount")
       .insert([
         {
           gebruikersnaam: gebruikersnaam,
           emailadres: email,
-          wachtwoord: wachtwoord
+          wachtwoord: hashedWachtwoord
         }
       ]);
 
