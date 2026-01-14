@@ -65,7 +65,7 @@ if (form) {
     if (error) {
       alert("Er ging iets fout: " + error.message);
     } else {
-      alert("Gebruiker succesvol aangemaakt!");
+      alert("Gebruikersaccount is succesvol aangemaakt!");
       form.reset();
       window.location.href = "index.html";
     }
