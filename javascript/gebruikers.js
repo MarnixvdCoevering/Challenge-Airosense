@@ -85,7 +85,9 @@ const path = window.location.pathname;
 if (
   path === "/" ||
   path.endsWith("/index.html") ||
-  path.endsWith("/signup.html")
+  path.endsWith("/signup.html") ||
+  path.endsWith("/index") ||
+  path.endsWith("/signup")
 ) {
 
 } else {
