@@ -3,7 +3,6 @@ body {
     font-family: Arial, sans-serif;
     background: linear-gradient(135deg, rgba(135, 206, 235, 1) 0%, rgba(2, 16, 88, 1) 80%);
     margin: 0;
-    overflow: hidden;
 }
 
 input {
@@ -125,16 +124,18 @@ button {
 }
 
 .metingen {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin: auto;
-    margin-top: 20px;
+    display: block;
+    padding: 10px;
+    margin: 20px auto;
     border-radius: 20px;
-    height: 75vh;
     background-color: #ffffff;
-    width: 90%;
+    max-width: 100%;
+    max-height: 75vh;
+    overflow-x: auto;
+    overflow-y: auto;
+    box-sizing: border-box;
 }
+
 
 td {
     text-align: center;
@@ -240,13 +241,22 @@ td {
     }
 
     body {
-        overflow: auto;
-        font-size: 16px;
+        min-height: 100vh;
+        margin: 0;
+        overflow-x: hidden;
     }
 
     .header {
         gap: 16px;
         padding: 8px;
+    }
+
+    .header button {
+        width: 100px;
+    }
+
+    .header .logo {
+        height: 60px;
     }
 
     .logo {
@@ -260,7 +270,7 @@ td {
     }
 
     .resultaat {
-        width: 92vw;
+        width: 90%;
         max-width: 400px;
         height: auto;
         padding: 16px;
@@ -304,23 +314,27 @@ td {
     }
 
     .metingen {
-        width: 95%;
-        height: auto;
-        max-height: none;
-        overflow-y: auto;
+        display: block;
+        padding: 10px;
+        margin: 20px auto;
+        border-radius: 20px;
+        background-color: #ffffff;
+        max-width: 100%;
+        max-height: 75vh;
         overflow-x: auto;
+        overflow-y: auto;
+        box-sizing: border-box;
     }
 
     td {
-        padding: 6px;
+        padding: 5px;
         font-size: 12px;
         border: 1px solid #000000;
     }
 
     table {
-        width: 100%;
-        font-size: 13px;
-        overflow-x: auto;
+        width: max-content;
+        border-collapse: collapse;
     }
 
     .inlogschermlogos {
