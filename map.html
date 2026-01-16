@@ -37,17 +37,9 @@
 </div>
 
 <script>
-/* =========================
-   Supabase
-========================= */
-const supabaseClient = supabase.createClient(
-    "https://shkpjdqcnxygpmzrmsnq.supabase.co",
-    "sb_publishable_WSC4uJgY2EoUmwVVbzbgAA_VQrBAx5N"
-);
-
-/* =========================
-   Map
-========================= */
+const SUPABASE_URL = "https://shkpjdqcnxygpmzrmsnq.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_WSC4uJgY2EoUmwVVbzbgAA_VQrBAx5N";
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const nederlandBounds = [[50.5, 3.0], [53.8, 7.5]];
 
 const map = L.map("map", {
@@ -62,50 +54,34 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     attribution: "&copy; OpenStreetMap contributors"
 }).addTo(map);
 
-/* =========================
-   Styles
-========================= */
-const baseStyle = {
-    color: "#000",
-    weight: 1,
-    fillOpacity: 0.7
-};
-
-const hoverStyle = { weight: 2 };
-const selectedStyle = { weight: 3 };
+const baseStyle = { color:"#000", weight:1, fillOpacity:0.7 };
+const hoverStyle = { weight:2 };
+const selectedStyle = { weight:3 };
 
 let selectedGemeente = null;
 let gemeenteLayers = {};
 
-/* =========================
-   Gemeenten (PDOK)
-========================= */
 const gemeenteWFS =
     "https://service.pdok.nl/cbs/gebiedsindelingen/2025/wfs/v1_0" +
     "?service=WFS&version=2.0.0&request=GetFeature" +
     "&typeNames=gebiedsindelingen:gemeente_gegeneraliseerd" +
     "&outputFormat=application/json&srsName=EPSG:4326";
 
-fetch(gemeenteWFS)
-.then(res => res.json())
-.then(async geojson => {
+const gemeenteDropdown = document.getElementById("gemeenteDropdown");
 
-    const dropdown = document.getElementById("gemeenteDropdown");
+async function loadGemeenten() {
+    const res = await fetch(gemeenteWFS);
+    const geojson = await res.json();
 
     L.geoJSON(geojson, {
         onEachFeature: (feature, layer) => {
-
             const naam = feature.properties.statnaam;
 
             if (!gemeenteLayers[naam]) {
                 gemeenteLayers[naam] = L.featureGroup().addTo(map);
             }
 
-            layer.baseStyle = {
-                ...baseStyle,
-                fillColor: "#ffffff"
-            };
-
+            layer.baseStyle = { ...baseStyle, fillColor:"#ffffff" };
             layer.setStyle(layer.baseStyle);
 
             layer.on("mouseover", () => {
@@ -125,96 +101,70 @@ fetch(gemeenteWFS)
             gemeenteLayers[naam].addLayer(layer);
         }
     });
-
-    /* Dropdown vullen */
+    
     Object.keys(gemeenteLayers)
-        .sort((a, b) => a.localeCompare(b, "nl"))
-        .forEach(g => {
+        .sort((a,b)=>a.localeCompare(b,"nl"))
+        .forEach(g=>{
             const option = document.createElement("option");
             option.value = g;
             option.textContent = g;
-            dropdown.appendChild(option);
+            gemeenteDropdown.appendChild(option);
         });
 
-    /* =========================
-       Supabase → laatste meting per locatie
-    ========================= */
-    const { data, error } = await supabaseClient
-        .from("meting")   // ✅ JUISTE TABELNAAM
-        .select("locatie, eco2_waarde, datum")
-        .order("datum", { ascending: false });
+    await updateMapFromSupabase();
+}
+const THRESHOLDS = { eco2_warn:1000, eco2_danger:2000, tvoc_warn:220, tvoc_danger:660 };
 
-    console.log("Supabase data:", data);
-    console.log("Supabase error:", error);
+function classifyAirQuality(eco2,tvoc){
+    if(eco2>=THRESHOLDS.eco2_danger||tvoc>=THRESHOLDS.tvoc_danger) return "danger";
+    if(eco2>=THRESHOLDS.eco2_warn||tvoc>=THRESHOLDS.tvoc_warn) return "warn";
+    return "ok";
+}
 
-    if (error || !data) return;
+async function updateMapFromSupabase() {
+    const { data, error } = await supabaseClient.from("meting")
+        .select("locatie, eco2_waarde, tvoc_waarde, datum")
+        .order("datum",{ascending:false});
 
-    const laatstePerLocatie = {};
-    data.forEach(m => {
-        if (!laatstePerLocatie[m.locatie]) {
-            laatstePerLocatie[m.locatie] = m;
-        }
-    });
+    if(error || !data) return console.error(error);
 
-    Object.values(laatstePerLocatie).forEach(m => {
+    const latestPerLocatie = {};
+    data.forEach(m=>{ if(!latestPerLocatie[m.locatie]) latestPerLocatie[m.locatie]=m; });
 
+    Object.values(latestPerLocatie).forEach(m=>{
         const group = gemeenteLayers[m.locatie];
-        if (!group) return;
+        if(!group) return;
 
-        const waarde = Number(m.eco2_waarde);
-        if (isNaN(waarde)) return;
+        const status = classifyAirQuality(m.eco2_waarde, m.tvoc_waarde);
+        const kleur = status==="danger"?"#ff4d4d":status==="warn"?"#ffcc00":"#66cc66";
 
-        let kleur;
-        if (waarde > 1000) kleur = "#ff4d4d";
-        else if (waarde > 500) kleur = "#ffcc00";
-        else kleur = "#66cc66";
-
-        group.eachLayer(l => {
-            l.baseStyle = { ...l.baseStyle, fillColor: kleur };
+        group.eachLayer(l=>{
+            l.baseStyle = {...l.baseStyle, fillColor:kleur};
             l.setStyle(l.baseStyle);
-
-            l.bindPopup(`
-                <b>${m.locatie}</b><br>
-                ECO₂: ${waarde} ppm<br>
-                Datum: ${new Date(m.datum).toLocaleString("nl-NL")}
-            `);
+            l.bindPopup(`<b>${m.locatie}</b><br>ECO₂: ${m.eco2_waarde} ppm<br>TVOC: ${m.tvoc_waarde} ppb<br>Datum: ${new Date(m.datum).toLocaleString("nl-NL")}`);
         });
     });
+}
+gemeenteDropdown.addEventListener("change", e=>{
+    const naam = e.target.value; if(!naam) return;
 
-    /* Dropdown select */
-    dropdown.addEventListener("change", e => {
-        const naam = e.target.value;
-        if (!naam) return;
+    if(selectedGemeente) {
+        gemeenteLayers[selectedGemeente].eachLayer(l=>l.setStyle(l.baseStyle));
+    }
 
-        if (selectedGemeente) {
-            gemeenteLayers[selectedGemeente].eachLayer(l => {
-                l.setStyle(l.baseStyle);
-            });
-        }
+    selectedGemeente = naam;
+    gemeenteLayers[naam].eachLayer(l=>l.setStyle({...l.baseStyle, ...selectedStyle}));
+    map.fitBounds(gemeenteLayers[naam].getBounds(),{padding:[50,50]});
+});
 
-        selectedGemeente = naam;
-
-        gemeenteLayers[naam].eachLayer(l => {
-            l.setStyle({ ...l.baseStyle, ...selectedStyle });
-        });
-
-        map.fitBounds(gemeenteLayers[naam].getBounds(), { padding: [50, 50] });
-    });
-
-    /* Reset */
-    document.getElementById("resetMap").addEventListener("click", () => {
-        if (selectedGemeente) {
-            gemeenteLayers[selectedGemeente].eachLayer(l => {
-                l.setStyle(l.baseStyle);
-            });
-        }
-        selectedGemeente = null;
-        dropdown.value = "";
-        map.fitBounds(nederlandBounds);
-    });
-
+document.getElementById("resetMap").addEventListener("click", ()=>{
+    if(selectedGemeente) gemeenteLayers[selectedGemeente].eachLayer(l=>l.setStyle(l.baseStyle));
+    selectedGemeente = null;
+    gemeenteDropdown.value="";
     map.fitBounds(nederlandBounds);
 });
+loadGemeenten().catch(console.error);
+map.fitBounds(nederlandBounds);
 </script>
 
 </body>
