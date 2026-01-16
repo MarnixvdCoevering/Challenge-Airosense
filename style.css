@@ -80,6 +80,23 @@ button {
     border-radius: 20px;
     padding: 20px;
     margin: auto;
+    color: #111;
+    transition: background-color 200ms ease, color 200ms ease;
+}
+
+.resultaat.ok {
+  background: #2e7d32;
+  color: white;
+}
+
+.resultaat.warn {
+  background: #f9a825;
+  color: #111;
+}
+
+.resultaat.danger {
+  background: #c62828;
+  color: white;
 }
 
 .main {
