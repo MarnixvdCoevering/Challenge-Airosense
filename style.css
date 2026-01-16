@@ -151,6 +151,8 @@ button {
     overflow-x: auto;
     overflow-y: auto;
     box-sizing: border-box;
+    width: fit-content;
+    height: 70vh;
 }
 
 
