@@ -1,14 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
-            <!-- Supabase CDN -->
+    <!-- Supabase CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="module" src="javascript/gebruikers.js"></script>
     <title>Airosense</title>
 </head>
+
 <body>
     <header class="header">
         <a href="./map.html"><button class="knop menu">Map</button></a>
@@ -16,19 +18,34 @@
         <a href="./vorigemetingen.html"><button class="knop menu">Metingen</button></a>
     </header>
     <main class="main">
-        <button id="startMetingBtn" class="knop top">Upload MY_DATA</button>
-        <div class="resultaat">
-            <p id="statusText" style="color:#000000; padding:10px;">Status: gereed voor meten</p>
+
+        <div class="gemeente-select">
+            <label for="gemeenteDropdown">Selecteer gemeente</label>
+            <select id="gemeenteDropdown">
+                <option value="">-- Kies een gemeente --</option>
+            </select>
+
+            <button id="startMetingBtn" disabled>Upload MY_DATA</button>
+        </div>
+        
+        <div id="resultBox" class="resultaat">
             <p id="latestText" style="color:#000000; padding:10px;"></p>
+            <p id="statusLucht" style="color:#000000; padding: 70px;"></p>
+            <p id="statusText" style="color:#000000; padding:10px;">Status: gereed voor meten</p>
         </div>
         <div class="uitlegtekst">
-            <p style="color:white;">klik op de A knop van de microbit en wacht 30 seconden<br>Upload daarna het MY_DATA bestand vanaf de microbit</p>
+            <p style="color:white;">klik op de A knop van de microbit en wacht 30 seconden<br>Upload daarna het MY_DATA
+                bestand vanaf de microbit</p>
         </div>
         <input id="microbitFileInput" type="file" accept=".htm,.html,.csv,.txt" style="display:none" />
     </main>
 
     <script src="javascript/app.js"></script>
 
-    <div class="bottom-text"><p>Contact:</p><br><p>E-mail: airosense@hotmail.com</p></div>
+    <div class="bottom-text">
+        <p>Contact:</p><br>
+        <p>E-mail: airosense@hotmail.com</p>
+    </div>
 </body>
+
 </html>
