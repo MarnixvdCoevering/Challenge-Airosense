@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -24,7 +24,6 @@
     </a>
 </header>
 
-<!-- Controls -->
 <div class="gemeente-select">
     <label for="gemeenteDropdown">Selecteer gemeente</label>
     <select id="gemeenteDropdown">
@@ -41,21 +40,16 @@
 /* =========================
    Supabase
 ========================= */
-const supabaseUrl = "https://shkpjdqcnxygpmzrmsnq.supabase.co";
-const supabaseKey = "sb_publishable_WSC4uJgY2EoUmwVVbzbgAA_VQrBAx5N";
-const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
-
-/* =========================
-   Nederland bounds
-========================= */
-const nederlandBounds = [
-    [50.5, 3.0],
-    [53.8, 7.5]
-];
+const supabaseClient = supabase.createClient(
+    "https://shkpjdqcnxygpmzrmsnq.supabase.co",
+    "sb_publishable_WSC4uJgY2EoUmwVVbzbgAA_VQrBAx5N"
+);
 
 /* =========================
    Map
 ========================= */
+const nederlandBounds = [[50.5, 3.0], [53.8, 7.5]];
+
 const map = L.map("map", {
     maxBounds: nederlandBounds,
     maxBoundsViscosity: 0.8
@@ -71,15 +65,20 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
 /* =========================
    Styles
 ========================= */
-const defaultStyle = { fillColor: "#ffffff", color: "#000", weight: 1, fillOpacity: 0.7 };
-const hoverStyle   = { fillColor: "#e0f0ff", weight: 2 };
-const selectedStyle= { fillColor: "#99ccff", weight: 3 };
+const baseStyle = {
+    color: "#000",
+    weight: 1,
+    fillOpacity: 0.7
+};
 
-let selectedLayer = null;
+const hoverStyle = { weight: 2 };
+const selectedStyle = { weight: 3 };
+
+let selectedGemeente = null;
 let gemeenteLayers = {};
 
 /* =========================
-   Gemeente WFS
+   Gemeenten (PDOK)
 ========================= */
 const gemeenteWFS =
     "https://service.pdok.nl/cbs/gebiedsindelingen/2025/wfs/v1_0" +
@@ -88,111 +87,134 @@ const gemeenteWFS =
     "&outputFormat=application/json&srsName=EPSG:4326";
 
 fetch(gemeenteWFS)
-    .then(res => res.json())
-    .then(async geojson => {
-        const dropdown = document.getElementById("gemeenteDropdown");
+.then(res => res.json())
+.then(async geojson => {
 
-        // Voeg gemeenten toe aan map
-        L.geoJSON(geojson, {
-            style: defaultStyle,
-            onEachFeature: (feature, layer) => {
-                const name = feature.properties.statnaam || "Onbekend";
+    const dropdown = document.getElementById("gemeenteDropdown");
 
-                layer.bindPopup(`<b>${name}</b>`);
-                gemeenteLayers[name] = layer;
+    L.geoJSON(geojson, {
+        onEachFeature: (feature, layer) => {
 
-                layer.on("mouseover", () => {
-                    if (layer !== selectedLayer) layer.setStyle(hoverStyle);
-                });
+            const naam = feature.properties.statnaam;
 
-                layer.on("mouseout", () => {
-                    if (layer !== selectedLayer) layer.setStyle(defaultStyle);
-                });
-            }
-        }).addTo(map);
-
-        /* =========================
-           Dropdown vullen
-        ========================= */
-        Object.keys(gemeenteLayers)
-            .sort((a,b)=>a.localeCompare(b,"nl"))
-            .forEach(name => {
-                const option = document.createElement("option");
-                option.value = name;
-                option.textContent = name;
-                dropdown.appendChild(option);
-            });
-
-        /* =========================
-           Supabase kleuren (laatste meting per gemeente)
-        ========================== */
-        async function kleurLaatsteMetingen() {
-            let { data, error } = await supabaseClient
-                .from("metingen")
-                .select("gemeente, eco2_waarde, datum")
-                .order("datum", { ascending: false });
-
-            if (error) {
-                console.error("Supabase error:", error);
-                return;
+            if (!gemeenteLayers[naam]) {
+                gemeenteLayers[naam] = L.featureGroup().addTo(map);
             }
 
-            // Laatste meting per gemeente
-            const laatstePerGemeente = {};
-            data.forEach(item => {
-                if (!laatstePerGemeente[item.gemeente]) {
-                    laatstePerGemeente[item.gemeente] = item;
+            layer.baseStyle = {
+                ...baseStyle,
+                fillColor: "#ffffff"
+            };
+
+            layer.setStyle(layer.baseStyle);
+
+            layer.on("mouseover", () => {
+                if (selectedGemeente !== naam) {
+                    layer.setStyle({ ...layer.baseStyle, ...hoverStyle });
                 }
             });
 
-            Object.values(laatstePerGemeente).forEach(item => {
-                const layer = gemeenteLayers[item.gemeente];
-                if (!layer) return;
+            layer.on("mouseout", () => {
+                if (selectedGemeente !== naam) {
+                    layer.setStyle(layer.baseStyle);
+                }
+            });
 
-                const waarde = item.eco2_waarde;
-                let color;
-                if (waarde > 1000) color = "#ff4d4d";
-                else if (waarde > 500) color = "#ffcc00";
-                else color = "#66cc66";
+            layer.bindPopup(`<b>${naam}</b>`);
 
-                layer.setStyle({ fillColor: color, fillOpacity: 0.7 });
-                layer.bindPopup(`<b>${item.gemeente}</b><br>Laatste eco2 waarde: ${waarde}`);
+            gemeenteLayers[naam].addLayer(layer);
+        }
+    });
+
+    /* Dropdown vullen */
+    Object.keys(gemeenteLayers)
+        .sort((a, b) => a.localeCompare(b, "nl"))
+        .forEach(g => {
+            const option = document.createElement("option");
+            option.value = g;
+            option.textContent = g;
+            dropdown.appendChild(option);
+        });
+
+    /* =========================
+       Supabase → laatste meting per locatie
+    ========================= */
+    const { data, error } = await supabaseClient
+        .from("meting")   // ✅ JUISTE TABELNAAM
+        .select("locatie, eco2_waarde, datum")
+        .order("datum", { ascending: false });
+
+    console.log("Supabase data:", data);
+    console.log("Supabase error:", error);
+
+    if (error || !data) return;
+
+    const laatstePerLocatie = {};
+    data.forEach(m => {
+        if (!laatstePerLocatie[m.locatie]) {
+            laatstePerLocatie[m.locatie] = m;
+        }
+    });
+
+    Object.values(laatstePerLocatie).forEach(m => {
+
+        const group = gemeenteLayers[m.locatie];
+        if (!group) return;
+
+        const waarde = Number(m.eco2_waarde);
+        if (isNaN(waarde)) return;
+
+        let kleur;
+        if (waarde > 1000) kleur = "#ff4d4d";
+        else if (waarde > 500) kleur = "#ffcc00";
+        else kleur = "#66cc66";
+
+        group.eachLayer(l => {
+            l.baseStyle = { ...l.baseStyle, fillColor: kleur };
+            l.setStyle(l.baseStyle);
+
+            l.bindPopup(`
+                <b>${m.locatie}</b><br>
+                ECO₂: ${waarde} ppm<br>
+                Datum: ${new Date(m.datum).toLocaleString("nl-NL")}
+            `);
+        });
+    });
+
+    /* Dropdown select */
+    dropdown.addEventListener("change", e => {
+        const naam = e.target.value;
+        if (!naam) return;
+
+        if (selectedGemeente) {
+            gemeenteLayers[selectedGemeente].eachLayer(l => {
+                l.setStyle(l.baseStyle);
             });
         }
 
-        await kleurLaatsteMetingen();
+        selectedGemeente = naam;
 
-        /* =========================
-           Dropdown select
-        ========================= */
-        dropdown.addEventListener("change", function() {
-            const name = this.value;
-            if (!name) return;
-
-            const layer = gemeenteLayers[name];
-
-            if (selectedLayer) selectedLayer.setStyle(defaultStyle);
-            selectedLayer = layer;
-            layer.setStyle(selectedStyle);
-
-            map.fitBounds(layer.getBounds(), { padding: [50,50] });
-            map.panTo(layer.getBounds().getCenter(), { animate: true, duration: 0.5 });
-
-            layer.openPopup();
+        gemeenteLayers[naam].eachLayer(l => {
+            l.setStyle({ ...l.baseStyle, ...selectedStyle });
         });
 
-        /* =========================
-           Reset button
-        ========================= */
-        document.getElementById("resetMap").addEventListener("click", () => {
-            if (selectedLayer) selectedLayer.setStyle(defaultStyle);
-            selectedLayer = null;
-            dropdown.value = "";
-            map.fitBounds(nederlandBounds);
-        });
+        map.fitBounds(gemeenteLayers[naam].getBounds(), { padding: [50, 50] });
+    });
 
+    /* Reset */
+    document.getElementById("resetMap").addEventListener("click", () => {
+        if (selectedGemeente) {
+            gemeenteLayers[selectedGemeente].eachLayer(l => {
+                l.setStyle(l.baseStyle);
+            });
+        }
+        selectedGemeente = null;
+        dropdown.value = "";
         map.fitBounds(nederlandBounds);
     });
+
+    map.fitBounds(nederlandBounds);
+});
 </script>
 
 </body>

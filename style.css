@@ -174,7 +174,7 @@ td {
     border: 3px solid #000;
     border-radius: 20px;
     display: block; /* belangrijk: geen flex, anders polygon fills verdwijnen */
-    background-color: #ffffff; /* of transparent */
+    
 }
 
 .mappie {
